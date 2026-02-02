@@ -5,8 +5,8 @@ services:
     region: singapore  # or your preferred region
     plan: free
     rootDir: .
-    buildCommand: npm install && npm run build --workspace=shared && npm run build --workspace=backend
-    startCommand: npm run start --workspace=backend
+    buildCommand: npm install && npm run build:shared && npm run build:backend
+    startCommand: npm run start:backend
     envVars:
       - key: NODE_ENV
         value: production

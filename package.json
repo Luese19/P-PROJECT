@@ -12,6 +12,9 @@
     "mobile": "npm run start --workspace=mobile",
     "backend": "npm run dev --workspace=backend",
     "backend:start": "npm run start --workspace=backend",
+    "build:shared": "npm run build --workspace=shared",
+    "build:backend": "npm run build --workspace=backend",
+    "start:backend": "npm run start --workspace=backend",
     "install:all": "npm install"
   },
   "overrides": {
