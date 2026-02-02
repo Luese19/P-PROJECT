@@ -38,9 +38,16 @@ export default function CommuterMap() {
   const fetchRoutes = async () => {
     try {
       const response = await fetch(`${API_URL}/api/routes`);
-      const data = await response.json();
-      if (data.success) {
-        setRoutes(data.data);
+      const responseText = await response.text();
+      
+      try {
+        const data = JSON.parse(responseText);
+        if (data.success) {
+          setRoutes(data.data);
+        }
+      } catch (e) {
+        console.error('Failed to parse routes JSON. Response:', responseText);
+        Alert.alert('Server Error', 'The server returned an invalid response. Check the console for details.');
       }
     } catch (error) {
       console.error('Failed to fetch routes:', error);

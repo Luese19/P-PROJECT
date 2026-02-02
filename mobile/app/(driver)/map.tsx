@@ -118,9 +118,16 @@ export default function DriverMap() {
     setIsLoadingRoutes(true);
     try {
       const response = await fetch(`${API_URL}/api/routes`);
-      const data = await response.json();
-      if (data.success) {
-        setRoutes(data.data);
+      const responseText = await response.text();
+      
+      try {
+        const data = JSON.parse(responseText);
+        if (data.success) {
+          setRoutes(data.data);
+        }
+      } catch (e) {
+        console.error('Failed to parse routes JSON. Response:', responseText);
+        // Error could be "Not Found" or "Internal Server Error"
       }
     } catch (error) {
       console.error('Failed to fetch routes:', error);

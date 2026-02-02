@@ -5,7 +5,9 @@
     "forceConsistentCasingInFileNames": true,
     "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"]
+      "@/*": ["src/*"],
+      "shared": ["../shared/src"],
+      "shared/*": ["../shared/src/*"]
     },
     "module": "ESNext"
   },

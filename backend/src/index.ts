@@ -18,6 +18,12 @@ import { sanitizeStrings } from './middleware/validation';
 const app = express();
 const server = http.createServer(app);
 
+// Root route to prevent "Cannot GET /"
+app.get('/', (req, res) => {
+  res.send('🚌 Jeep-Track API is running');
+  
+});
+
 // Socket.io setup
 const io = new SocketServer(server, {
   cors: {
