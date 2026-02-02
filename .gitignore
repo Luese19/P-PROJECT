@@ -5,9 +5,12 @@ node_modules/
 
 # Expo
 .expo/
-dist/
 web-build/
 expo-env.d.ts
+
+# Build outputs (except shared which is needed for deployment)
+backend/dist/
+mobile/dist/
 
 # Native builds
 *.orig.*
