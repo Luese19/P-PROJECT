@@ -14,7 +14,7 @@ import {
   ActivityIndicator,
   Dimensions,
 } from 'react-native';
-import MapView, { Marker, PROVIDER_GOOGLE, Polyline } from 'react-native-maps';
+import MapView, { Marker, Polyline, PROVIDER_GOOGLE, UrlTile } from 'react-native-maps';
 import { Ionicons } from '@expo/vector-icons';
 import * as Crypto from 'expo-crypto';
 import { useLocationStore, Route, Coordinate } from '../../src/store/locationStore';
@@ -257,14 +257,14 @@ export default function DriverMap() {
   };
 
   useEffect(() => {
-    if (userLocation) {
+    if (userLocation && !isSharing) {
       setMapRegion({
         ...userLocation,
         latitudeDelta: 0.01,
         longitudeDelta: 0.01,
       });
     }
-  }, [userLocation]);
+  }, [userLocation, isSharing]);
 
   const handleStartSharing = () => {
     if (!selectedRoute) {
@@ -439,11 +439,10 @@ export default function DriverMap() {
   };
 
   // Get polyline points for a route
-  const getRoutePolylinePoints = (route: Route): Coordinate[] => {
+  const getRoutePolylinePoints = (route: Route) => {
     if (route.waypoints && route.waypoints.length > 0) {
       return route.waypoints;
     }
-    // Fallback to start and end points if no waypoints
     return [route.start_point, route.end_point];
   };
 
@@ -452,22 +451,33 @@ export default function DriverMap() {
       <MapView
         style={styles.map}
         provider={Platform.OS === 'android' ? PROVIDER_GOOGLE : undefined}
+        mapType={Platform.OS === 'android' ? "none" : "standard"}
         region={mapRegion}
         onRegionChangeComplete={setMapRegion}
         showsUserLocation
         showsMyLocationButton={false}
       >
+        {Platform.OS === 'android' && (
+          <UrlTile
+            urlTemplate="https://api.maptiler.com/maps/streets-v2/256/{z}/{x}/{y}.png?key=lNjLi9IJl653YF35vEcP"
+            maximumZ={19}
+            flipY={false}
+          />
+        )}
         {/* Display all route polylines */}
         {routes.map((route, index) => {
-          const points = getRoutePolylinePoints(route);
-          if (points.length < 2) return null;
+          const coordinates = getRoutePolylinePoints(route);
+          if (coordinates.length < 2) return null;
+          
           return (
             <Polyline
               key={route.id}
-              coordinates={points}
-              strokeColor={getRouteColor(index)}
-              strokeWidth={selectedRoute?.id === route.id ? 5 : 3}
-              lineDashPattern={selectedRoute?.id === route.id ? undefined : [10, 5]}
+              coordinates={coordinates}
+              strokeColor={selectedRoute?.id === route.id ? '#000' : getRouteColor(index)}
+              strokeWidth={selectedRoute?.id === route.id ? 6 : 3}
+              lineDashPattern={selectedRoute?.id === route.id ? undefined : [1, 8]}
+              lineJoin="round"
+              lineCap="round"
             />
           );
         })}
@@ -477,7 +487,9 @@ export default function DriverMap() {
           <Polyline
             coordinates={recordedWaypoints}
             strokeColor="#e53935"
-            strokeWidth={6}
+            strokeWidth={7}
+            lineJoin="round"
+            lineCap="round"
           />
         )}
 
@@ -487,26 +499,29 @@ export default function DriverMap() {
             <Marker
               coordinate={selectedRoute.waypoints[0]}
               title="Start"
-              anchor={{ x: 0.5, y: 1 }}
             >
               <View style={styles.routeMarker}>
-                <Ionicons name="flag" size={16} color="#4caf50" />
+                <Ionicons name="play-circle" size={20} color="#000" />
               </View>
             </Marker>
+            
             <Marker
               coordinate={selectedRoute.waypoints[selectedRoute.waypoints.length - 1]}
               title="End"
-              anchor={{ x: 0.5, y: 1 }}
             >
               <View style={styles.routeMarker}>
-                <Ionicons name="flag" size={16} color="#e53935" />
+                <Ionicons name="flag" size={20} color="#000" />
               </View>
             </Marker>
           </>
         )}
 
+        {/* User Marker Overlay */}
         {userLocation && (
-          <Marker coordinate={userLocation} title="Your Location">
+          <Marker
+            coordinate={userLocation}
+            flat
+          >
             <Animated.View
               style={[
                 styles.driverMarker,
@@ -1004,7 +1019,7 @@ export default function DriverMap() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#f8f9fa',
   },
   map: {
     flex: 1,
@@ -1019,27 +1034,32 @@ const styles = StyleSheet.create({
     borderWidth: 4,
     borderColor: '#fff',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.4,
+    shadowRadius: 4,
+    elevation: 6,
   },
   driverMarkerActive: {
-    backgroundColor: '#1a73e8',
-    borderColor: '#4CAF50',
+    backgroundColor: '#000',
+    borderColor: '#fff',
+    shadowOpacity: 0.5,
   },
   driverMarkerRecording: {
     backgroundColor: '#e53935',
     borderColor: '#fff',
+    shadowColor: '#e53935',
+    shadowOpacity: 0.6,
   },
   routeMarker: {
     backgroundColor: '#fff',
-    padding: 6,
+    padding: 8,
     borderRadius: 20,
+    borderWidth: 2,
+    borderColor: '#000',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
-    shadowRadius: 4,
+    shadowRadius: 3,
     elevation: 4,
   },
   recordingBanner: {
@@ -1052,11 +1072,6 @@ const styles = StyleSheet.create({
     padding: 12,
     flexDirection: 'row',
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
   },
   recordingDot: {
     width: 12,
@@ -1085,18 +1100,13 @@ const styles = StyleSheet.create({
   statusCard: {
     backgroundColor: '#fff',
     borderRadius: 16,
-    padding: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 12,
-    elevation: 8,
-    borderWidth: 2,
+    padding: 20,
+    borderWidth: 1,
     borderColor: '#e0e0e0',
   },
   statusCardActive: {
-    backgroundColor: '#1a73e8',
-    borderColor: '#1557b0',
+    backgroundColor: '#000',
+    borderColor: '#000',
   },
   statusRow: {
     flexDirection: 'row',
@@ -1117,32 +1127,30 @@ const styles = StyleSheet.create({
   },
   statusDotActive: {
     backgroundColor: '#4CAF50',
-    shadowColor: '#4CAF50',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.8,
-    shadowRadius: 8,
   },
   statusText: {
     fontSize: 16,
-    fontWeight: '700',
-    color: '#333',
+    fontWeight: '600',
+    color: '#000',
+    letterSpacing: -0.3,
   },
   statusTextActive: {
     color: '#fff',
   },
   routeCodeText: {
     fontSize: 12,
-    color: '#666',
+    color: '#6b7280',
     marginTop: 2,
+    fontWeight: '400',
   },
   routeCodeTextActive: {
     color: 'rgba(255,255,255,0.8)',
   },
   routeName: {
-    fontSize: 14,
-    color: '#666',
+    fontSize: 13,
+    color: '#6b7280',
     marginTop: 8,
-    fontWeight: '500',
+    fontWeight: '400',
   },
   routeNameActive: {
     color: 'rgba(255,255,255,0.9)',
@@ -1169,27 +1177,23 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#fff',
-    paddingVertical: 14,
+    paddingVertical: 16,
     paddingHorizontal: 20,
-    borderRadius: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
-    borderWidth: 2,
-    borderColor: '#1a73e8',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#000',
   },
   routeButtonSelected: {
-    backgroundColor: '#1a73e8',
-    borderColor: '#1557b0',
+    backgroundColor: '#000',
+    borderColor: '#000',
   },
   routeButtonText: {
     flex: 1,
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#1a73e8',
+    fontSize: 15,
+    fontWeight: '500',
+    color: '#000',
     marginLeft: 10,
+    letterSpacing: -0.2,
   },
   routeButtonTextSelected: {
     color: '#fff',
@@ -1198,17 +1202,14 @@ const styles = StyleSheet.create({
     position: 'absolute',
     right: 20,
     bottom: 180,
-    width: 52,
-    height: 52,
-    borderRadius: 26,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     backgroundColor: '#fff',
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 6,
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
   },
   actionButtonContainer: {
     position: 'absolute',
@@ -1219,14 +1220,9 @@ const styles = StyleSheet.create({
   actionButton: {
     borderRadius: 16,
     paddingVertical: 18,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.3,
-    shadowRadius: 12,
-    elevation: 10,
   },
   startButton: {
-    backgroundColor: '#4CAF50',
+    backgroundColor: '#000',
   },
   stopButton: {
     backgroundColor: '#e53935',
@@ -1238,9 +1234,10 @@ const styles = StyleSheet.create({
   },
   actionButtonText: {
     color: '#fff',
-    fontSize: 18,
-    fontWeight: '700',
+    fontSize: 16,
+    fontWeight: '600',
     marginLeft: 12,
+    letterSpacing: -0.2,
   },
   modalOverlay: {
     flex: 1,
@@ -1263,14 +1260,16 @@ const styles = StyleSheet.create({
     borderBottomColor: '#f0f0f0',
   },
   modalTitle: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#333',
+    fontSize: 22,
+    fontWeight: '600',
+    color: '#000',
+    letterSpacing: -0.4,
   },
   modalSubtitle: {
-    fontSize: 14,
-    color: '#666',
+    fontSize: 13,
+    color: '#6b7280',
     marginTop: 4,
+    fontWeight: '400',
   },
   closeButton: {
     padding: 4,
@@ -1290,10 +1289,10 @@ const styles = StyleSheet.create({
   routeItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#f8f9fa',
-    borderRadius: 12,
+    backgroundColor: '#fff',
+    borderRadius: 16,
     marginBottom: 12,
-    borderWidth: 2,
+    borderWidth: 1,
     borderColor: '#e0e0e0',
     overflow: 'hidden',
   },
@@ -1301,17 +1300,17 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 16,
+    padding: 18,
   },
   routeItemSelected: {
-    backgroundColor: '#1a73e8',
-    borderColor: '#1557b0',
+    backgroundColor: '#000',
+    borderColor: '#000',
   },
   routeItemIcon: {
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: 'rgba(26, 115, 232, 0.1)',
+    backgroundColor: '#f3f4f6',
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
@@ -1329,25 +1328,28 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   routeItemCode: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#1a73e8',
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#000',
+    letterSpacing: -0.2,
   },
   routeItemFare: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#4CAF50',
+    fontSize: 13,
+    fontWeight: '500',
+    color: '#000',
   },
   routeItemName: {
     fontSize: 15,
-    fontWeight: '600',
-    color: '#333',
+    fontWeight: '500',
+    color: '#000',
     marginBottom: 4,
+    letterSpacing: -0.2,
   },
   routeItemDesc: {
     fontSize: 13,
-    color: '#666',
+    color: '#6b7280',
     lineHeight: 18,
+    fontWeight: '400',
   },
   fareRow: {
     flexDirection: 'row',
@@ -1398,36 +1400,39 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 15,
+    padding: 16,
     marginTop: 10,
     borderWidth: 1,
-    borderColor: '#1a73e8',
+    borderColor: '#000',
     borderStyle: 'dashed',
-    borderRadius: 12,
+    borderRadius: 16,
   },
   createCustomText: {
     marginLeft: 8,
-    color: '#1a73e8',
-    fontSize: 16,
-    fontWeight: '600',
+    color: '#000',
+    fontSize: 15,
+    fontWeight: '500',
+    letterSpacing: -0.2,
   },
   formContent: {
     padding: 20,
   },
   label: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#666',
-    marginBottom: 5,
+    fontSize: 13,
+    fontWeight: '500',
+    color: '#000',
+    marginBottom: 8,
+    letterSpacing: -0.2,
   },
   input: {
     borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 8,
-    padding: 12,
-    fontSize: 16,
+    borderColor: '#e0e0e0',
+    borderRadius: 12,
+    padding: 14,
+    fontSize: 15,
     marginBottom: 20,
-    backgroundColor: '#f9f9f9',
+    backgroundColor: '#fff',
+    fontWeight: '400',
   },
   textArea: {
     height: 80,
@@ -1440,26 +1445,28 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
   },
   saveButton: {
-    backgroundColor: '#1a73e8',
-    padding: 15,
-    borderRadius: 8,
+    backgroundColor: '#000',
+    padding: 16,
+    borderRadius: 12,
     alignItems: 'center',
     marginBottom: 30,
   },
   saveButtonText: {
     color: '#fff',
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '600',
+    letterSpacing: -0.2,
   },
   saveButtonDisabled: {
     backgroundColor: '#ccc',
   },
   sectionTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#333',
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#000',
     marginTop: 10,
     marginBottom: 15,
+    letterSpacing: -0.3,
   },
   fareInputRow: {
     flexDirection: 'row',
@@ -1471,18 +1478,20 @@ const styles = StyleSheet.create({
   },
   fareInputLabel: {
     fontSize: 13,
-    fontWeight: '600',
-    color: '#666',
+    fontWeight: '500',
+    color: '#000',
     marginBottom: 6,
+    letterSpacing: -0.2,
   },
   fareInput: {
     borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 8,
+    borderColor: '#e0e0e0',
+    borderRadius: 12,
     padding: 12,
-    fontSize: 16,
-    backgroundColor: '#f9f9f9',
+    fontSize: 15,
+    backgroundColor: '#fff',
     textAlign: 'center',
+    fontWeight: '400',
   },
   fareModalContent: {
     backgroundColor: '#fff',
@@ -1494,9 +1503,9 @@ const styles = StyleSheet.create({
   fareCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#f8f9fa',
-    borderRadius: 12,
-    padding: 16,
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    padding: 18,
     marginBottom: 12,
     borderWidth: 1,
     borderColor: '#e0e0e0',
@@ -1505,7 +1514,7 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: '#e8f0fe',
+    backgroundColor: '#f3f4f6',
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
@@ -1515,32 +1524,34 @@ const styles = StyleSheet.create({
   },
   fareCardLabel: {
     fontSize: 15,
-    fontWeight: '600',
-    color: '#333',
+    fontWeight: '500',
+    color: '#000',
+    letterSpacing: -0.2,
   },
   fareCardDesc: {
     fontSize: 12,
-    color: '#666',
+    color: '#6b7280',
     marginTop: 2,
+    fontWeight: '400',
   },
   fareCardInput: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#fff',
-    borderRadius: 8,
+    borderRadius: 10,
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: '#e0e0e0',
     paddingHorizontal: 10,
   },
   currencySymbol: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#666',
+    fontSize: 15,
+    fontWeight: '500',
+    color: '#6b7280',
   },
   fareCardInputField: {
     width: 60,
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: 15,
+    fontWeight: '500',
     padding: 10,
     textAlign: 'right',
   },

@@ -12,7 +12,9 @@
       "resizeMode": "contain",
       "backgroundColor": "#1a73e8"
     },
-    "assetBundlePatterns": ["**/*"],
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.jeeptrack.app",
@@ -22,7 +24,9 @@
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "Jeep-Track needs your location to show nearby jeepneys and calculate ETAs.",
         "NSLocationAlwaysAndWhenInUseUsageDescription": "Jeep-Track needs your location to share your position as a driver.",
-        "UIBackgroundModes": ["location"]
+        "UIBackgroundModes": [
+          "location"
+        ]
       }
     },
     "android": {
@@ -58,6 +62,19 @@
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "68cdd152-881d-47f1-953e-f508f63fb581"
+      }
+    },
+    "owner": "luesedev",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/68cdd152-881d-47f1-953e-f508f63fb581"
     }
   }
 }
