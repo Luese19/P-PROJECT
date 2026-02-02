@@ -1,0 +1,33 @@
+{
+  "name": "jeep-track",
+  "version": "1.0.0",
+  "description": "Real-time jeepney tracking app for drivers and commuters",
+  "private": true,
+  "workspaces": [
+    "mobile",
+    "backend",
+    "shared"
+  ],
+  "scripts": {
+    "mobile": "npm run start --workspace=mobile",
+    "backend": "npm run dev --workspace=backend",
+    "backend:start": "npm run start --workspace=backend",
+    "install:all": "npm install"
+  },
+  "overrides": {
+    "@react-navigation/bottom-tabs": "^7.10.1",
+    "@react-navigation/core": "^7.14.0",
+    "@react-navigation/elements": "^2.1.18",
+    "@react-navigation/native": "^7.1.28",
+    "@react-navigation/native-stack": "^7.2.1"
+  },
+  "keywords": [
+    "jeepney",
+    "tracking",
+    "gps",
+    "philippines",
+    "transportation"
+  ],
+  "author": "",
+  "license": "MIT"
+}
