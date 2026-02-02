@@ -19,7 +19,7 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Crypto from 'expo-crypto';
 import { useLocationStore, Route, Coordinate } from '../../src/store/locationStore';
 import { useAuthStore } from '../../src/store/authStore';
-import { DEFAULT_REGION, API_URL } from '../../src/config';
+import { DEFAULT_REGION, API_URL, MAPTILER_API_KEY } from '../../src/config';
 
 // Route colors for visual distinction
 const ROUTE_COLORS = [
@@ -459,7 +459,7 @@ export default function DriverMap() {
       >
         {Platform.OS === 'android' && (
           <UrlTile
-            urlTemplate="https://api.maptiler.com/maps/streets-v2/256/{z}/{x}/{y}.png?key=lNjLi9IJl653YF35vEcP"
+            urlTemplate={`https://api.maptiler.com/maps/streets-v2/256/{z}/{x}/{y}.png?key=${MAPTILER_API_KEY}`}
             maximumZ={19}
             flipY={false}
           />

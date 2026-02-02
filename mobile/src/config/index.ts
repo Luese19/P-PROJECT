@@ -6,6 +6,9 @@ export const SOCKET_URL = process.env.EXPO_PUBLIC_SOCKET_URL || 'http://localhos
 export const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL || '';
 export const SUPABASE_ANON_KEY = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || '';
 
+// MapTiler Configuration (alternative to Google Maps)
+export const MAPTILER_API_KEY = process.env.EXPO_PUBLIC_MAPTILER_API_KEY || 'lNjLi9IJl653YF35vEcP';
+
 if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
   console.warn('⚠️ Supabase configuration is missing. Please check your .env file.');
 }
