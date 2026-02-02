@@ -77,7 +77,7 @@ export default function DriverMap() {
   const [isRecording, setIsRecording] = useState(false);
   const [recordedWaypoints, setRecordedWaypoints] = useState<Coordinate[]>([]);
   const [recordingRouteId, setRecordingRouteId] = useState<string | null>(null);
-  const recordingInterval = useRef<NodeJS.Timeout | null>(null);
+  const recordingInterval = useRef<ReturnType<typeof setInterval> | null>(null);
   const lastRecordedLocation = useRef<Coordinate | null>(null);
 
   useEffect(() => {
@@ -193,13 +193,18 @@ export default function DriverMap() {
   const handleSaveFares = async () => {
     if (!selectedRoute) return;
 
+    if (!session?.access_token) {
+      Alert.alert('Error', 'You must be logged in to update fares. Please sign out and sign in again.');
+      return;
+    }
+
     setIsSavingFares(true);
     try {
       const response = await fetch(`${API_URL}/api/routes/${selectedRoute.id}/fares`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session?.access_token}`,
+          'Authorization': `Bearer ${session.access_token}`,
         },
         body: JSON.stringify({
           fare_base: parseFloat(editFares.fare_base) || 13,
@@ -210,15 +215,21 @@ export default function DriverMap() {
       });
 
       const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.error || data.message || `Server error: ${response.status}`);
+      }
+      
       if (data.success) {
         Alert.alert('Success', 'Fares updated successfully!');
         await fetchRoutes();
         setSelectedRoute(data.data);
         setShowFareModal(false);
       } else {
-        throw new Error(data.error);
+        throw new Error(data.error || 'Unknown error occurred');
       }
     } catch (error: any) {
+      console.error('Save fares error:', error);
       Alert.alert('Error', error.message || 'Failed to update fares');
     } finally {
       setIsSavingFares(false);

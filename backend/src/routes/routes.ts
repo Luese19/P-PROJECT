@@ -130,11 +130,16 @@ routesRouter.patch('/:id/fares', authMiddleware, asyncHandler(async (req: AuthRe
   const { id } = req.params;
   const { fare_base, fare_student, fare_senior, fare_pwd } = req.body;
 
+  console.log('Updating fares for route:', id);
+  console.log('Fare data:', { fare_base, fare_student, fare_senior, fare_pwd });
+
   const updateData: any = { updated_at: new Date().toISOString() };
   if (fare_base !== undefined) updateData.fare_base = fare_base;
   if (fare_student !== undefined) updateData.fare_student = fare_student;
   if (fare_senior !== undefined) updateData.fare_senior = fare_senior;
   if (fare_pwd !== undefined) updateData.fare_pwd = fare_pwd;
+
+  console.log('Update data:', updateData);
 
   const { data: route, error } = await supabaseAdmin
     .from('routes')
@@ -144,8 +149,11 @@ routesRouter.patch('/:id/fares', authMiddleware, asyncHandler(async (req: AuthRe
     .single();
 
   if (error) {
+    console.error('Supabase error:', error);
     throw createError('Failed to update route fares: ' + error.message, 500);
   }
+
+  console.log('Updated route:', route);
 
   res.json({
     success: true,
